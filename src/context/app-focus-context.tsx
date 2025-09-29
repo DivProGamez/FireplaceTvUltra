@@ -39,11 +39,8 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const getElementById = (id: string): FocusableElement | null => {
-    for (const groupKey in focusableElements) {
-      const element = focusableElements[groupKey].find(el => el.id === id);
-      if (element) return element;
-    }
-    return null;
+    if (!id) return null;
+    return document.getElementById(id) as FocusableElement | null;
   };
   
   const findClosestElement = (
@@ -54,45 +51,45 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
     let bestCandidate: FocusableElement | null = null;
     let minDistance = Infinity;
 
-    const allElements = Object.values(focusableElements).flat();
+    const allElements = Object.values(focusableElements).flat().filter(el => el.id !== currentElement.id);
 
     for (const el of allElements) {
-      if (el === currentElement) continue;
-
       const elRect = el.getBoundingClientRect();
-      let isCandidate = false;
+      
+      const isVisible = el.offsetParent !== null;
+      if (!isVisible) continue;
+
+      const dx = (elRect.left + elRect.width / 2) - (currentRect.left + currentRect.width / 2);
+      const dy = (elRect.top + elRect.height / 2) - (currentRect.top + currentRect.height / 2);
+
+      let isPrimaryAxis = false;
+      let isSecondaryAxis = false;
       let distance = Infinity;
-      const xOverlap = Math.max(0, Math.min(currentRect.right, elRect.right) - Math.max(currentRect.left, elRect.left));
-      const yOverlap = Math.max(0, Math.min(currentRect.bottom, elRect.bottom) - Math.max(currentRect.top, elRect.top));
 
       switch (direction) {
         case "down":
-          if (elRect.top > currentRect.bottom || (elRect.top > currentRect.top && xOverlap === 0)) {
-            isCandidate = true;
-            distance = Math.hypot( (elRect.left + elRect.width / 2) - (currentRect.left + currentRect.width / 2), elRect.top - currentRect.bottom);
-          }
+          isPrimaryAxis = dy > 0;
+          isSecondaryAxis = Math.abs(dx) <= elRect.width / 2 + currentRect.width / 2;
+          distance = Math.sqrt(dx * dx + dy * dy * 4); // Prioritize vertical alignment
           break;
         case "up":
-          if (elRect.bottom < currentRect.top || (elRect.bottom < currentRect.bottom && xOverlap === 0)) {
-            isCandidate = true;
-             distance = Math.hypot( (elRect.left + elRect.width / 2) - (currentRect.left + currentRect.width / 2), currentRect.top - elRect.bottom);
-          }
+          isPrimaryAxis = dy < 0;
+          isSecondaryAxis = Math.abs(dx) <= elRect.width / 2 + currentRect.width / 2;
+          distance = Math.sqrt(dx * dx + dy * dy * 4); // Prioritize vertical alignment
           break;
         case "right":
-           if (elRect.left > currentRect.right || (elRect.left > currentRect.left && yOverlap === 0)) {
-             isCandidate = true;
-             distance = Math.hypot( elRect.left - currentRect.right, (elRect.top + elRect.height / 2) - (currentRect.top + currentRect.height / 2));
-           }
+          isPrimaryAxis = dx > 0;
+          isSecondaryAxis = Math.abs(dy) <= elRect.height / 2 + currentRect.height / 2;
+          distance = Math.sqrt(dx * dx * 4 + dy * dy); // Prioritize horizontal alignment
           break;
         case "left":
-          if (elRect.right < currentRect.left || (elRect.right < currentRect.right && yOverlap === 0)) {
-            isCandidate = true;
-            distance = Math.hypot(currentRect.left - elRect.right, (elRect.top + elRect.height / 2) - (currentRect.top + currentRect.height / 2));
-          }
+          isPrimaryAxis = dx < 0;
+          isSecondaryAxis = Math.abs(dy) <= elRect.height / 2 + currentRect.height / 2;
+          distance = Math.sqrt(dx * dx * 4 + dy * dy); // Prioritize horizontal alignment
           break;
       }
       
-      if (isCandidate && distance < minDistance) {
+      if (isPrimaryAxis && distance < minDistance) {
         minDistance = distance;
         bestCandidate = el;
       }
@@ -104,9 +101,11 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
   const navigate = useCallback(
     (direction: "up" | "down" | "left" | "right") => {
       if (!activeElement) {
-        const firstGroupKey = Object.keys(focusableElements)[0];
-        if(firstGroupKey && focusableElements[firstGroupKey].length > 0){
-           setActiveElement(focusableElements[firstGroupKey][0].id);
+         // Try to find the first focusable element from all groups
+        const firstElement = Object.values(focusableElements).flat()[0];
+        if (firstElement) {
+          setActiveElement(firstElement.id);
+          firstElement.focus();
         }
         return;
       }
@@ -118,7 +117,7 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
       
       if (nextElement) {
         setActiveElement(nextElement.id);
-        nextElement.focus();
+        nextElement.focus(); // Use browser focus for accessibility
       }
     },
     [activeElement, focusableElements]
@@ -126,24 +125,30 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow default behavior for inputs, textareas, etc.
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+      const target = e.target as HTMLElement;
+
+      // Allow default behavior for inputs, textareas, and dropdown menus
+      if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.closest('[role="menu"]')) {
         return;
       }
+      
+      // Also check if an alert dialog is open, let its internal focus management work
+      const isAlertOpen = document.querySelector('[role="alertdialog"]');
+
 
       let handled = true;
       switch (e.key) {
         case "ArrowUp":
-          navigate("up");
+          if (!isAlertOpen) navigate("up");
           break;
         case "ArrowDown":
-          navigate("down");
+          if (!isAlertOpen) navigate("down");
           break;
         case "ArrowLeft":
-          navigate("left");
+           if (!isAlertOpen) navigate("left");
           break;
         case "ArrowRight":
-          navigate("right");
+           if (!isAlertOpen) navigate("right");
           break;
         case "Enter":
           if (activeElement) {
@@ -152,12 +157,15 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
           }
           break;
         case "Escape":
-           // Handled in player-client for now, could be centralized here
+           // This is handled in player-client, but a global handler could be here.
+           // For now, let local components handle it.
+           // router.back();
            break;
         default:
           handled = false;
           break;
       }
+
       if (handled) {
         e.preventDefault();
       }

@@ -41,7 +41,7 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
   const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false); // Start paused
   const [isMuted, setIsMuted] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [timer, setTimer] = useState(0); // in seconds
@@ -64,14 +64,16 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
   useEffect(() => {
     if (controlsRef.current) {
       const elements = Array.from(controlsRef.current.querySelectorAll<HTMLElement>('[data-focusable-player]'));
+      // Clear previous focusable groups to avoid conflicts
       setFocusableElements({ player: elements });
       if (elements.length > 0) {
-        setFocus(elements[1].id); // Focus play/pause button by default
+         // Focus play/pause button by default
+        setTimeout(() => setFocus(elements.find(el => el.id === 'play-pause-btn')?.id || elements[1].id), 0);
       }
     }
      const handleActivity = (e: Event) => {
       // Prevent keyboard events from hiding controls
-      if (e instanceof KeyboardEvent && e.key.includes('Arrow')) return;
+      if (e instanceof KeyboardEvent && (e.key.includes('Arrow') || e.key === 'Enter')) return;
       resetControlsTimeout();
     };
     window.addEventListener("mousemove", handleActivity);
@@ -87,13 +89,10 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
       setFocusableElements({}); // Clear player focus on unmount
     };
   }, [resetControlsTimeout, setFocusableElements, setFocus]);
+  
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => {
-        setIsPlaying(false);
-      });
-    }
+    // This just marks the component as ready to play, doesn't start it.
     setIsLoaded(true);
   }, [pack.id]);
 
@@ -132,21 +131,6 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
     }
   }, [timer, router, timerKey]);
 
-  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
-     if (e.key === 'Escape') {
-        e.preventDefault();
-        router.back();
-      }
-  }, [router]);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleGlobalKeyDown);
-    }
-  }, [handleGlobalKeyDown]);
-
-
   if (isLocked) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background text-foreground text-center p-4">
@@ -171,6 +155,10 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
     const s = seconds % 60;
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
+  
+  const getButtonClass = (id: string) => {
+    return cn("transform transition-transform duration-200", activeElement === id && "scale-125 ring-4 ring-primary rounded-full");
+  }
 
   return (
     <div
@@ -187,14 +175,17 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
         <video
           src={pack.videoUrl}
           loop
-          autoPlay
+          autoPlay={isPlaying}
           muted
           playsInline
           className="w-full h-full object-cover"
           onCanPlay={() => setIsLoaded(true)}
+          onClick={() => setIsPlaying(!isPlaying)}
         />
       ) : (
-        <CanvasRenderer animationType={pack.animationType} />
+        <div onClick={() => setIsPlaying(!isPlaying)}>
+          <CanvasRenderer animationType={pack.animationType} />
+        </div>
       )}
       <audio ref={audioRef} src={pack.audioUrl} loop playsInline />
 
@@ -206,20 +197,20 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
         )}
       >
         <div className="absolute top-4 left-4 sm:top-8 sm:left-8">
-          <Button id="back-btn" data-focusable-player variant="ghost" size="icon" onClick={() => router.back()} onFocus={()=>setFocus('back-btn')} className={cn(activeElement === 'back-btn' && 'ring-2 ring-primary')}>
+          <Button id="back-btn" data-focusable-player variant="ghost" size="icon" onClick={() => router.back()} onFocus={()=>setFocus('back-btn')} className={getButtonClass('back-btn')}>
             <ArrowLeft className="w-8 h-8" />
           </Button>
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4">
-          <Button id="play-pause-btn" data-focusable-player variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} onFocus={()=>setFocus('play-pause-btn')} className={cn(activeElement === 'play-pause-btn' && 'ring-2 ring-primary')}>
+          <Button id="play-pause-btn" data-focusable-player variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} onFocus={()=>setFocus('play-pause-btn')} className={getButtonClass('play-pause-btn')}>
             {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
           </Button>
-           <Button id="mute-btn" data-focusable-player variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)} onFocus={()=>setFocus('mute-btn')} className={cn(activeElement === 'mute-btn' && 'ring-2 ring-primary')}>
+           <Button id="mute-btn" data-focusable-player variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)} onFocus={()=>setFocus('mute-btn')} className={getButtonClass('mute-btn')}>
             {isMuted ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button id="timer-btn" data-focusable-player variant="ghost" size="icon" onFocus={()=>setFocus('timer-btn')} className={cn(activeElement === 'timer-btn' && 'ring-2 ring-primary')}>
+              <Button id="timer-btn" data-focusable-player variant="ghost" size="icon" onFocus={()=>setFocus('timer-btn')} className={getButtonClass('timer-btn')}>
                 <Clock className="w-8 h-8" />
               </Button>
             </DropdownMenuTrigger>

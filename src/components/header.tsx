@@ -18,7 +18,7 @@ export function Header() {
   }, [setFocusableElements]);
 
   return (
-    <header className="flex items-center justify-between p-4 border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+    <header className="flex items-center justify-between p-4 border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-sm z-20">
       <div className="text-xl font-bold font-headline text-primary">
         Immersive Escapes
       </div>

@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], gridId: string }) {
   const { isPremiumUnlocked, unlockPremium } = usePremium();
   const [showPremiumDialog, setShowPremiumDialog] = React.useState(false);
-  const { setFocus, activeElement, navigate, focusableElements, setFocusableElements } = useAppFocus();
+  const { setFocus, activeElement, setFocusableElements } = useAppFocus();
   const gridRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -34,7 +34,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
   useEffect(() => {
     if (gridRef.current) {
       const elements = Array.from(
-        gridRef.current.querySelectorAll<HTMLAnchorElement>('[data-focusable]')
+        gridRef.current.querySelectorAll<HTMLAnchorElement>('[data-focusable-grid-item]')
       );
       setFocusableElements(prev => ({...prev, [gridId]: elements}));
     }
@@ -48,6 +48,8 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
     if (pack.isPremium && !isPremiumUnlocked) {
       e.preventDefault();
       setShowPremiumDialog(true);
+      // Set focus to the dialog's default button when it opens
+      setTimeout(() => setFocus('alert-cancel'), 0);
     }
   };
 
@@ -65,7 +67,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
             <Link
               key={pack.id}
               id={elementId}
-              data-focusable
+              data-focusable-grid-item
               href={`/ambiance/${pack.id}`}
               onClick={(e) => handlePackClick(e, pack)}
               onFocus={() => setFocus(elementId)}
@@ -75,11 +77,11 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
                   : pack.title
               }
               className={cn(
-                "group focus:outline-none rounded-lg",
-                 activeElement === elementId && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                "group focus:outline-none rounded-lg transition-transform duration-200 ease-in-out",
+                 activeElement === elementId ? "scale-110 ring-4 ring-primary ring-offset-4 ring-offset-background z-10" : "scale-100"
               )}
             >
-              <Card className="overflow-hidden h-full transition-all duration-300 ease-in-out hover:shadow-primary/20 hover:shadow-lg hover:-translate-y-1">
+              <Card className="overflow-hidden h-full transition-all duration-300 ease-in-out border-2 border-transparent group-hover:border-primary">
                 <CardContent className="p-0 relative">
                   <div className="aspect-video overflow-hidden">
                     <Image
@@ -121,22 +123,21 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Sparkles className="text-primary" />
-              Unlock Premium Content
+              Unlock Premium
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This is a premium ambiance pack. Unlock all content to enjoy this
-              and many other exclusive soundscapes.
+              Get access to this and all other premium soundscapes for a one-time payment of $4.99.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              data-focusable
+              data-focusable-alert
               onFocus={() => setFocus('alert-cancel')}
               id="alert-cancel"
                className={cn(activeElement === 'alert-cancel' && 'ring-2 ring-primary')}
             >Maybe Later</AlertDialogCancel>
             <AlertDialogAction
-              data-focusable
+              data-focusable-alert
               id="alert-action"
               onFocus={() => setFocus('alert-action')}
               className={cn(activeElement === 'alert-action' && 'ring-2 ring-primary')}
@@ -145,7 +146,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
                 setShowPremiumDialog(false);
               }}
             >
-              Unlock Now
+              Unlock Now for $4.99
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
