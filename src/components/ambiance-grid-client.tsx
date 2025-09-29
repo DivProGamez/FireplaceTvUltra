@@ -43,17 +43,31 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
 
   useEffect(() => {
     if (showPremiumDialog) {
-      const elements = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-focusable-alert]'));
-      setFocusableElements({ alert: elements });
-      setTimeout(() => setFocus('alert-cancel'), 0);
+      // Use a timeout to ensure the dialog is rendered before setting focus
+      setTimeout(() => {
+        const elements = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-focusable-alert]'));
+        setFocusableElements({ alert: elements });
+        // Set initial focus on the cancel button
+        if (elements.length > 0) {
+            setFocus('alert-cancel');
+        }
+      }, 100); 
     } else {
-      // Return focus to the grid when dialog is closed
-      const elements = Array.from(
+       // Return focus to the grid when dialog is closed
+       if (activeElement && activeElement.startsWith('alert-')) {
+          const lastFocusedGridItem = Object.values(focusableElements).flat().find(el => el.id.startsWith(gridId));
+          if(lastFocusedGridItem) {
+            setFocus(lastFocusedGridItem.id);
+          }
+       }
+       // Restore grid focusable elements
+       const gridElements = Array.from(
         gridRef.current?.querySelectorAll<HTMLAnchorElement>('[data-focusable-grid-item]') || []
       );
-      setFocusableElements({ [gridId]: elements });
+       const tabElements = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-focusable-tab]'));
+       setFocusableElements({ tabs: tabElements, [gridId]: gridElements });
     }
-  }, [showPremiumDialog, setFocusableElements, setFocus, gridId]);
+  }, [showPremiumDialog]);
 
 
   const handlePackClick = (
@@ -64,6 +78,15 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
       e.preventDefault();
       setSelectedPack(pack);
       setShowPremiumDialog(true);
+    }
+  };
+
+  const handleUnlock = () => {
+    if (selectedPack) {
+      unlockPack(selectedPack.id);
+      setShowPremiumDialog(false);
+      // After unlocking, navigate to the ambiance page
+      router.push(`/ambiance/${selectedPack.id}`);
     }
   };
 
@@ -140,7 +163,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
               Unlock: {selectedPack?.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Get permanent access to this immersive escape for a one-time payment of <strong className="text-foreground font-bold text-lg">$4.99</strong>.
+              Get permanent access to this immersive escape for a one-time payment of <strong className="text-foreground font-bold text-lg text-yellow-400">$4.99</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -155,12 +178,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
               id="alert-action"
               onFocus={() => setFocus('alert-action')}
               className={cn("font-bold", activeElement === 'alert-action' && 'ring-2 ring-primary ring-offset-2 ring-offset-background')}
-              onClick={() => {
-                if (selectedPack) {
-                  unlockPack(selectedPack.id);
-                }
-                setShowPremiumDialog(false);
-              }}
+              onClick={handleUnlock}
             >
               Unlock Now for $4.99
             </AlertDialogAction>

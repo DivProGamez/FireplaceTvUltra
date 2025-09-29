@@ -38,7 +38,7 @@ const playNavSound = () => {
       navSound.currentTime = 0;
       navSound.play().catch(error => {
         // Autoplay can be blocked, handle silently
-        console.warn("Navigation sound was blocked by the browser.", error);
+        // console.warn("Navigation sound was blocked by the browser.", error);
       });
     }
 }
@@ -68,59 +68,77 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
     const currentRect = currentElement.getBoundingClientRect();
     let bestCandidate: FocusableElement | null = null;
     let minDistance = Infinity;
-
+  
     const allElements = Object.values(focusableElements).flat().filter(el => {
       const elRect = el.getBoundingClientRect();
-      // Ensure element is visible before considering it
       return el.offsetParent !== null && elRect.width > 0 && elRect.height > 0;
     });
-
+  
     for (const el of allElements) {
-       if (el.id === currentElement.id) continue;
-      
+      if (el.id === currentElement.id) continue;
+  
       const elRect = el.getBoundingClientRect();
       const dx = (elRect.left + elRect.width / 2) - (currentRect.left + currentRect.width / 2);
       const dy = (elRect.top + elRect.height / 2) - (currentRect.top + currentRect.height / 2);
-
+  
       let isPrimaryAxis = false;
       let distance = Infinity;
-
-      // Penalize movement in the secondary axis
-      const horizontalPenalty = 1.5;
-      const verticalPenalty = 1.5;
-
+  
+      // Increased penalty for secondary axis movement to favor straight lines
+      const axisPenalty = 2.0;
+  
       switch (direction) {
         case "down":
-          isPrimaryAxis = dy > 5; // Must be below current
-          if (isPrimaryAxis) {
-              distance = Math.abs(dx) * horizontalPenalty + dy;
+          // Element must be primarily below the current one.
+          if (dy > Math.abs(dx)) {
+            isPrimaryAxis = true;
+            distance = Math.sqrt(dx * dx * 0.5 + dy * dy); // Prioritize vertical distance
           }
           break;
         case "up":
-          isPrimaryAxis = dy < -5; // Must be above current
-          if (isPrimaryAxis) {
-              distance = Math.abs(dx) * horizontalPenalty - dy;
+          // Element must be primarily above the current one.
+          if (-dy > Math.abs(dx)) {
+            isPrimaryAxis = true;
+            distance = Math.sqrt(dx * dx * 0.5 - dy * dy);
           }
           break;
         case "right":
-          isPrimaryAxis = dx > 5; // Must be to the right
-          if (isPrimaryAxis) {
-              distance = dx + Math.abs(dy) * verticalPenalty;
+           // Element must be primarily to the right.
+          if (dx > Math.abs(dy)) {
+            isPrimaryAxis = true;
+            distance = Math.sqrt(dx * dx + dy * dy * axisPenalty); // Penalize vertical deviation
           }
           break;
         case "left":
-          isPrimaryAxis = dx < -5; // Must be to the left
-          if (isPrimaryAxis) {
-              distance = -dx + Math.abs(dy) * verticalPenalty;
+           // Element must be primarily to the left.
+          if (-dx > Math.abs(dy)) {
+            isPrimaryAxis = true;
+            distance = Math.sqrt(dx * dx + dy * dy * axisPenalty);
           }
           break;
       }
-      
+  
       if (isPrimaryAxis && distance < minDistance) {
         minDistance = distance;
         bestCandidate = el;
       }
     }
+    // Fallback for simple horizontal navigation if no "best" candidate is found
+    if (!bestCandidate && (direction === 'left' || direction === 'right')) {
+        const currentGroupKey = Object.keys(focusableElements).find(key => focusableElements[key].some(el => el.id === currentElement.id));
+        if (currentGroupKey) {
+            const currentGroup = focusableElements[currentGroupKey];
+            const currentIndex = currentGroup.findIndex(el => el.id === currentElement.id);
+            if (direction === 'left' && currentIndex > 0) {
+                return currentGroup[currentIndex - 1];
+            }
+            if (direction === 'right' && currentIndex < currentGroup.length - 1) {
+                return currentGroup[currentIndex + 1];
+            }
+        }
+    }
+
+
     return bestCandidate;
   };
 
@@ -161,34 +179,31 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
         return;
       }
       
-      // Also check if an alert dialog is open, let its internal focus management work
-      const isAlertOpen = document.querySelector('[role="alertdialog"]');
-
-
       let handled = true;
       switch (e.key) {
         case "ArrowUp":
-          if (!isAlertOpen) navigate("up");
+          navigate("up");
           break;
         case "ArrowDown":
-          if (!isAlertOpen) navigate("down");
+          navigate("down");
           break;
         case "ArrowLeft":
-           if (!isAlertOpen) navigate("left");
+           navigate("left");
           break;
         case "ArrowRight":
-           if (!isAlertOpen) navigate("right");
+           navigate("right");
           break;
         case "Enter":
+           // Handle synthetic click for Enter key
           if (activeElement) {
             const el = getElementById(activeElement);
-            el?.click();
+            if(el) {
+              el.click();
+            }
           }
           break;
         case "Escape":
-           // This is handled in player-client, but a global handler could be here.
-           // For now, let local components handle it.
-           // router.back();
+           router.back();
            break;
         default:
           handled = false;
@@ -197,12 +212,13 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
 
       if (handled) {
         e.preventDefault();
+        e.stopPropagation();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true); // Use capture phase
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, true);
     };
   }, [navigate, activeElement, router]);
 
