@@ -9,7 +9,6 @@ export type AmbiancePack = {
   audioUrl: string;
   animationType: 'fireplace' | 'rain' | 'aquarium' | 'none';
   isPremium: boolean;
-  audioDescription: string;
 };
 
 export const ambiancePacks: AmbiancePack[] = [
@@ -21,7 +20,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'fireplace',
     audioUrl: '/audio/fireplace.mp3', // Placeholder
     isPremium: false,
-    audioDescription: 'A steady fireplace crackling in a cozy room.',
   },
   {
     id: 'gentle-rain',
@@ -31,8 +29,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'rain',
     audioUrl: '/audio/rain.mp3', // Placeholder
     isPremium: false,
-    audioDescription:
-      'A light, consistent rain falls against a window pane.',
   },
   {
     id: 'serene-aquarium',
@@ -42,7 +38,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'aquarium',
     audioUrl: '/audio/aquarium.mp3', // Placeholder
     isPremium: false,
-    audioDescription: 'The gentle bubbling of an aquarium filter and water.',
   },
   {
     id: 'forest-creek',
@@ -52,8 +47,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/forest.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'Water gently flowing over rocks in a forest, with distant bird calls.',
   },
   {
     id: 'cozy-cafe',
@@ -63,8 +56,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/cafe.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'Muffled conversations, the clinking of cups, and the hiss of an espresso machine.',
   },
   {
     id: 'thunderstorm',
@@ -74,8 +65,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'rain',
     audioUrl: '/audio/thunderstorm.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'Heavy rain mixed with the low rumble of distant thunder.',
   },
   {
     id: 'night-sky',
@@ -85,8 +74,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/night.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'A chorus of crickets on a calm, clear summer night.',
   },
   {
     id: 'ocean-waves',
@@ -97,7 +84,6 @@ export const ambiancePacks: AmbiancePack[] = [
     audioUrl: '/audio/ocean.mp3', // Placeholder
     videoUrl: '/videos/ocean.mp4',
     isPremium: true,
-    audioDescription: 'The rhythmic sound of ocean waves breaking on a beach.',
   },
   {
     id: 'zen-garden',
@@ -107,8 +93,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/zen.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'A light wind rustling through bamboo leaves in a quiet garden.',
   },
   {
     id: 'city-ambience',
@@ -118,8 +102,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/city.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'The low, distant hum of city traffic from a high-rise apartment.',
   },
   {
     id: 'grand-library',
@@ -129,8 +111,6 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/library.mp3', // Placeholder
     isPremium: true,
-    audioDescription:
-      'The quiet atmosphere of a library, with occasional page turns and soft coughs.',
   },
   {
     id: 'cat-purring',
@@ -140,6 +120,32 @@ export const ambiancePacks: AmbiancePack[] = [
     animationType: 'none',
     audioUrl: '/audio/cat.mp3', // Placeholder
     isPremium: true,
-    audioDescription: 'A close-up, deep, and rhythmic cat purr.',
+  },
+    {
+    id: 'windy-desert',
+    title: 'Windy Desert',
+    description: 'The sound of wind sweeping across desert dunes.',
+    thumbnailUrlId: 'windy-desert',
+    animationType: 'none',
+    audioUrl: '/audio/desert.mp3',
+    isPremium: true,
+  },
+  {
+    id: 'train-journey',
+    title: 'Train Journey',
+    description: 'The rhythmic clickety-clack of a train on the rails.',
+    thumbnailUrlId: 'train-journey',
+    animationType: 'none',
+    audioUrl: '/audio/train.mp3',
+    isPremium: true,
+  },
+  {
+    id: 'space-engine',
+    title: 'Space Engine',
+    description: 'The low hum of a spaceship engine traversing the cosmos.',
+    thumbnailUrlId: 'space-engine',
+    animationType: 'none',
+    audioUrl: '/audio/space.mp3',
+    isPremium: true,
   },
 ];

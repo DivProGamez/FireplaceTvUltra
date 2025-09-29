@@ -95,7 +95,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
                   </div>
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <Lock className="w-8 h-8 text-primary-foreground/80" />
+                      <Lock className="w-8 h-8 text-yellow-400" />
                     </div>
                   )}
                   <div
@@ -126,7 +126,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
               Unlock Premium
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Get access to this and all other premium soundscapes for a one-time payment of $4.99.
+              Get access to this and all other premium soundscapes for a one-time payment of <strong className="text-foreground">$4.99</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

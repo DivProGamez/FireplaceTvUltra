@@ -26,6 +26,24 @@ const AppFocusContext = createContext<AppFocusContextType | undefined>(
   undefined
 );
 
+// Pre-create audio element to avoid delay on first play
+let navSound: HTMLAudioElement | null = null;
+if (typeof window !== 'undefined') {
+  navSound = new Audio('/audio/nav-sound.mp3');
+  navSound.volume = 0.3; // Lower volume for a subtle effect
+}
+
+const playNavSound = () => {
+    if (navSound) {
+      navSound.currentTime = 0;
+      navSound.play().catch(error => {
+        // Autoplay can be blocked, handle silently
+        console.warn("Navigation sound was blocked by the browser.", error);
+      });
+    }
+}
+
+
 export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -51,41 +69,50 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
     let bestCandidate: FocusableElement | null = null;
     let minDistance = Infinity;
 
-    const allElements = Object.values(focusableElements).flat().filter(el => el.id !== currentElement.id);
+    const allElements = Object.values(focusableElements).flat().filter(el => {
+      const elRect = el.getBoundingClientRect();
+      // Ensure element is visible before considering it
+      return el.offsetParent !== null && elRect.width > 0 && elRect.height > 0;
+    });
 
     for (const el of allElements) {
-      const elRect = el.getBoundingClientRect();
+       if (el.id === currentElement.id) continue;
       
-      const isVisible = el.offsetParent !== null;
-      if (!isVisible) continue;
-
+      const elRect = el.getBoundingClientRect();
       const dx = (elRect.left + elRect.width / 2) - (currentRect.left + currentRect.width / 2);
       const dy = (elRect.top + elRect.height / 2) - (currentRect.top + currentRect.height / 2);
 
       let isPrimaryAxis = false;
-      let isSecondaryAxis = false;
       let distance = Infinity;
+
+      // Penalize movement in the secondary axis
+      const horizontalPenalty = 1.5;
+      const verticalPenalty = 1.5;
 
       switch (direction) {
         case "down":
-          isPrimaryAxis = dy > 0;
-          isSecondaryAxis = Math.abs(dx) <= elRect.width / 2 + currentRect.width / 2;
-          distance = Math.sqrt(dx * dx + dy * dy * 4); // Prioritize vertical alignment
+          isPrimaryAxis = dy > 5; // Must be below current
+          if (isPrimaryAxis) {
+              distance = Math.abs(dx) * horizontalPenalty + dy;
+          }
           break;
         case "up":
-          isPrimaryAxis = dy < 0;
-          isSecondaryAxis = Math.abs(dx) <= elRect.width / 2 + currentRect.width / 2;
-          distance = Math.sqrt(dx * dx + dy * dy * 4); // Prioritize vertical alignment
+          isPrimaryAxis = dy < -5; // Must be above current
+          if (isPrimaryAxis) {
+              distance = Math.abs(dx) * horizontalPenalty - dy;
+          }
           break;
         case "right":
-          isPrimaryAxis = dx > 0;
-          isSecondaryAxis = Math.abs(dy) <= elRect.height / 2 + currentRect.height / 2;
-          distance = Math.sqrt(dx * dx * 4 + dy * dy); // Prioritize horizontal alignment
+          isPrimaryAxis = dx > 5; // Must be to the right
+          if (isPrimaryAxis) {
+              distance = dx + Math.abs(dy) * verticalPenalty;
+          }
           break;
         case "left":
-          isPrimaryAxis = dx < 0;
-          isSecondaryAxis = Math.abs(dy) <= elRect.height / 2 + currentRect.height / 2;
-          distance = Math.sqrt(dx * dx * 4 + dy * dy); // Prioritize horizontal alignment
+          isPrimaryAxis = dx < -5; // Must be to the left
+          if (isPrimaryAxis) {
+              distance = -dx + Math.abs(dy) * verticalPenalty;
+          }
           break;
       }
       
@@ -104,6 +131,7 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
          // Try to find the first focusable element from all groups
         const firstElement = Object.values(focusableElements).flat()[0];
         if (firstElement) {
+          playNavSound();
           setActiveElement(firstElement.id);
           firstElement.focus();
         }
@@ -116,6 +144,7 @@ export const AppFocusProvider: React.FC<{ children: ReactNode }> = ({
       const nextElement = findClosestElement(currentElement, direction);
       
       if (nextElement) {
+        playNavSound();
         setActiveElement(nextElement.id);
         nextElement.focus(); // Use browser focus for accessibility
       }
