@@ -27,7 +27,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
   const { isPackUnlocked, unlockPack } = usePremium();
   const [showPremiumDialog, setShowPremiumDialog] = React.useState(false);
   const [selectedPack, setSelectedPack] = React.useState<AmbiancePack | null>(null);
-  const { setFocus, activeElement, setFocusableElements } = useAppFocus();
+  const { setFocus, activeElement, setFocusableElements, focusableElements } = useAppFocus();
   const gridRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -67,7 +67,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
        const tabElements = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-focusable-tab]'));
        setFocusableElements({ tabs: tabElements, [gridId]: gridElements });
     }
-  }, [showPremiumDialog]);
+  }, [showPremiumDialog, activeElement, gridId, setFocus, setFocusableElements, focusableElements]);
 
 
   const handlePackClick = (
