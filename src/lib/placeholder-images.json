@@ -1,3 +1,76 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "fireplace",
+      "description": "A cozy, crackling fireplace.",
+      "imageUrl": "https://images.unsplash.com/photo-1615694924226-0576100226bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmaXJlcGxhY2UlMjBsb2dzfGVufDB8fHx8MTc1OTA2Nzc0M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fireplace logs"
+    },
+    {
+      "id": "gentle-rain",
+      "description": "Gentle rain tapping on a window pane.",
+      "imageUrl": "https://images.unsplash.com/photo-1614101595484-712913c033b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cmFpbiUyMHdpbmRvd3xlbnwwfHx8fDE3NTkwNzEwOTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "rain window"
+    },
+    {
+      "id": "coral-reef",
+      "description": "The serene bubbling of a vibrant coral reef.",
+      "imageUrl": "https://images.unsplash.com/photo-1582967788606-a171c1080cb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb3JhbCUyMHJlZWZ8ZW58MHx8fHwxNzU5MDE3NjMzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "coral reef"
+    },
+    {
+      "id": "forest-creek",
+      "description": "A tranquil creek flowing through a lush forest.",
+      "imageUrl": "https://images.unsplash.com/photo-1621125149589-1c25dd0a146b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmb3Jlc3QlMjBjcmVla3xlbnwwfHx8fDE3NTkxMjY0MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "forest creek"
+    },
+    {
+      "id": "cozy-cafe",
+      "description": "The warm, ambient chatter of a cozy coffee shop.",
+      "imageUrl": "https://images.unsplash.com/photo-1511081692775-05d0f180a065?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjb3p5JTIwY2FmZXxlbnwwfHx8fDE3NTkwNTk5MTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cozy cafe"
+    },
+    {
+      "id": "thunderstorm",
+      "description": "A powerful thunderstorm with distant thunder and heavy rain.",
+      "imageUrl": "https://images.unsplash.com/photo-1625818002003-c36cc8714a46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx0aHVuZGVyc3Rvcm0lMjBza3l8ZW58MHx8fHwxNzU5MTI2NDA3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "thunderstorm sky"
+    },
+    {
+      "id": "night-sky",
+      "description": "The quiet hum of a clear night sky, with crickets chirping.",
+      "imageUrl": "https://images.unsplash.com/photo-1472552944129-b035e9ea3744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxuaWdodCUyMHNreXxlbnwwfHx8fDE3NTkxMjE3OTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "night sky"
+    },
+    {
+      "id": "ocean-waves",
+      "description": "Calm ocean waves washing up on a sandy shore.",
+      "imageUrl": "https://images.unsplash.com/photo-1527745592400-8c411e7717ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxvY2VhbiUyMHdhdmVzfGVufDB8fHx8MTc1OTA1NzE2Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ocean waves"
+    },
+    {
+      "id": "zen-garden",
+      "description": "A peaceful zen garden with a gentle breeze through bamboo.",
+      "imageUrl": "https://images.unsplash.com/photo-1490713575234-cbe010982904?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx6ZW4lMjBnYXJkZW58ZW58MHx8fHwxNzU5MDYzMzgyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "zen garden"
+    },
+    {
+      "id": "city-ambience",
+      "description": "The distant, muted sounds of a city at night.",
+      "imageUrl": "https://images.unsplash.com/photo-1588312744377-2adfb7b8578a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjaXR5JTIwbmlnaHR8ZW58MHx8fHwxNzU5MDI2NjQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "city night"
+    },
+    {
+      "id": "library",
+      "description": "The quiet rustle of pages in a grand, old library.",
+      "imageUrl": "https://images.unsplash.com/photo-1640273837947-ea830d50c191?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxvbGQlMjBsaWJyYXJ5fGVufDB8fHx8MTc1OTA1OTM3Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "old library"
+    },
+    {
+      "id": "cat-purring",
+      "description": "The deep, comforting purr of a sleeping cat.",
+      "imageUrl": "https://images.unsplash.com/photo-1498962911956-fea73daaa4c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzbGVlcGluZyUyMGNhdHxlbnwwfHx8fDE3NTkwODk2MDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sleeping cat"
+    }
+  ]
 }

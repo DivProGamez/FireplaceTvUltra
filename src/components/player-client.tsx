@@ -1,0 +1,254 @@
+"use client";
+
+import type { AmbiancePack } from "@/data/ambiance";
+import { usePremium } from "@/context/premium-context";
+import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { CanvasRenderer } from "./canvas-renderer";
+import {
+  ArrowLeft,
+  Clock,
+  Loader2,
+  Lock,
+  MessageCircle,
+  Pause,
+  Play,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { adjustSoundscape } from "@/ai/flows/dynamic-soundscape";
+
+const timerOptions = [
+  { label: "Off", value: 0 },
+  { label: "15 min", value: 15 * 60 },
+  { label: "30 min", value: 30 * 60 },
+  { label: "60 min", value: 60 * 60 },
+  { label: "120 min", value: 120 * 60 },
+];
+
+export function PlayerClient({ pack }: { pack: AmbiancePack }) {
+  const { isPremiumUnlocked } = usePremium();
+  const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
+  const [timer, setTimer] = useState(0); // in seconds
+  const [timerKey, setTimerKey] = useState(Date.now());
+  const [aiSoundscape, setAiSoundscape] = useState("");
+
+  const isLocked = pack.isPremium && !isPremiumUnlocked;
+
+  const resetControlsTimeout = useCallback(() => {
+    setIsControlsVisible(true);
+    if (hideControlsTimeout.current) {
+      clearTimeout(hideControlsTimeout.current);
+    }
+    hideControlsTimeout.current = setTimeout(() => {
+      setIsControlsVisible(false);
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    const handleActivity = () => resetControlsTimeout();
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    resetControlsTimeout();
+
+    return () => {
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      if (hideControlsTimeout.current) {
+        clearTimeout(hideControlsTimeout.current);
+      }
+    };
+  }, [resetControlsTimeout]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {
+        // Autoplay was prevented, user needs to interact
+        setIsPlaying(false);
+      });
+    }
+    setIsLoaded(true);
+  }, [pack.id]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.play().catch(() => setIsPlaying(false));
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying]);
+  
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsPlaying(false);
+            router.push("/");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer, router, timerKey]);
+
+  useEffect(() => {
+    let timerStatus: "off" | "running" | "almost_done" = "off";
+    if (timer > 0) {
+      timerStatus = timer <= 5 * 60 ? "almost_done" : "running";
+    }
+
+    const updateSoundscape = async () => {
+      try {
+        const result = await adjustSoundscape({
+          audioDescription: pack.audioDescription,
+          timerStatus,
+          currentTime: new Date().toLocaleTimeString(),
+        });
+        setAiSoundscape(result.modifiedAudioDescription);
+      } catch (error) {
+        console.error("AI soundscape adjustment failed:", error);
+      }
+    };
+
+    updateSoundscape();
+    const interval = setInterval(updateSoundscape, 30000); // Update every 30s
+    return () => clearInterval(interval);
+  }, [timer, pack.audioDescription]);
+
+
+  if (isLocked) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background text-foreground text-center p-4">
+        <Lock className="w-16 h-16 text-primary mb-4" />
+        <h1 className="text-3xl font-headline mb-2">Content Locked</h1>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          This is a premium escape. Please unlock all content to access it.
+        </p>
+        <Button asChild>
+          <Link href="/">
+            <ArrowLeft className="mr-2" />
+            Back to Escapes
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const formatTime = (seconds: number) => {
+    if (seconds <= 0) return "Off";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div
+      className="relative w-full h-screen bg-black overflow-hidden"
+      onClick={resetControlsTimeout}
+    >
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-50">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      )}
+
+      {pack.videoUrl ? (
+        <video
+          src={pack.videoUrl}
+          loop
+          autoPlay
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+          onCanPlay={() => setIsLoaded(true)}
+        />
+      ) : (
+        <CanvasRenderer animationType={pack.animationType} />
+      )}
+      <audio ref={audioRef} src={pack.audioUrl} loop playsInline />
+
+      <div
+        className={cn(
+          "absolute inset-0 bg-black/30 transition-opacity duration-500",
+          isControlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
+        <div className="absolute top-4 left-4 sm:top-8 sm:left-8">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="w-8 h-8" />
+          </Button>
+        </div>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)}>
+            {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+          </Button>
+           <Button variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)}>
+            {isMuted ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Clock className="w-8 h-8" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {timerOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.value}
+                  onClick={() => {
+                    setTimer(opt.value);
+                    setTimerKey(Date.now());
+                  }}
+                >
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="absolute bottom-8 right-8 text-lg tabular-nums">
+          {formatTime(timer)}
+        </div>
+        {aiSoundscape && (
+          <div className="absolute bottom-24 right-8 max-w-sm bg-black/50 p-3 rounded-lg text-sm text-white/80 backdrop-blur-sm flex items-start gap-2">
+            <MessageCircle className="w-5 h-5 flex-shrink-0 text-accent mt-0.5" />
+            <p>
+              <span className="font-bold text-accent">AI Soundscape:</span>{" "}
+              {aiSoundscape}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
