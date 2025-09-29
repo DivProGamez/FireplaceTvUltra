@@ -1,11 +1,13 @@
+// src/context/premium-context.tsx
 "use client";
 
 import { useToast } from "@/hooks/use-toast";
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 interface PremiumContextType {
-  isPremiumUnlocked: boolean;
-  unlockPremium: () => void;
+  unlockedPacks: string[];
+  unlockPack: (packId: string) => void;
+  isPackUnlocked: (packId: string) => boolean;
 }
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
@@ -13,20 +15,24 @@ const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
+  const [unlockedPacks, setUnlockedPacks] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const unlockPremium = useCallback(() => {
-    setIsPremiumUnlocked(true);
+  const unlockPack = useCallback((packId: string) => {
+    setUnlockedPacks((prev) => [...prev, packId]);
     toast({
-      title: "Premium Unlocked!",
-      description: "You now have access to all Immersive Escapes.",
+      title: "Successfully Unlocked!",
+      description: "You now have access to this Immersive Escape.",
       duration: 5000,
     });
   }, [toast]);
+  
+  const isPackUnlocked = useCallback((packId: string) => {
+    return unlockedPacks.includes(packId);
+  }, [unlockedPacks]);
 
   return (
-    <PremiumContext.Provider value={{ isPremiumUnlocked, unlockPremium }}>
+    <PremiumContext.Provider value={{ unlockedPacks, unlockPack, isPackUnlocked }}>
       {children}
     </PremiumContext.Provider>
   );

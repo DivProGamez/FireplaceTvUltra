@@ -24,8 +24,9 @@ import { useRouter } from "next/navigation";
 
 
 export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], gridId: string }) {
-  const { isPremiumUnlocked, unlockPremium } = usePremium();
+  const { isPackUnlocked, unlockPack } = usePremium();
   const [showPremiumDialog, setShowPremiumDialog] = React.useState(false);
+  const [selectedPack, setSelectedPack] = React.useState<AmbiancePack | null>(null);
   const { setFocus, activeElement, setFocusableElements } = useAppFocus();
   const gridRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -40,16 +41,29 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
     }
   }, [packs, gridId, setFocusableElements]);
 
+  useEffect(() => {
+    if (showPremiumDialog) {
+      const elements = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-focusable-alert]'));
+      setFocusableElements({ alert: elements });
+      setTimeout(() => setFocus('alert-cancel'), 0);
+    } else {
+      // Return focus to the grid when dialog is closed
+      const elements = Array.from(
+        gridRef.current?.querySelectorAll<HTMLAnchorElement>('[data-focusable-grid-item]') || []
+      );
+      setFocusableElements({ [gridId]: elements });
+    }
+  }, [showPremiumDialog, setFocusableElements, setFocus, gridId]);
+
 
   const handlePackClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     pack: AmbiancePack
   ) => {
-    if (pack.isPremium && !isPremiumUnlocked) {
+    if (pack.isPremium && !isPackUnlocked(pack.id)) {
       e.preventDefault();
+      setSelectedPack(pack);
       setShowPremiumDialog(true);
-      // Set focus to the dialog's default button when it opens
-      setTimeout(() => setFocus('alert-cancel'), 0);
     }
   };
 
@@ -57,7 +71,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
     <>
       <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {packs.map((pack, index) => {
-          const isLocked = pack.isPremium && !isPremiumUnlocked;
+          const isLocked = pack.isPremium && !isPackUnlocked(pack.id);
           const image = PlaceHolderImages.find(
             (img) => img.id === pack.thumbnailUrlId
           );
@@ -123,10 +137,10 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Sparkles className="text-primary" />
-              Unlock Premium
+              Unlock: {selectedPack?.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Get access to this and all other premium soundscapes for a one-time payment of <strong className="text-foreground">$4.99</strong>.
+              Get permanent access to this immersive escape for a one-time payment of <strong className="text-foreground font-bold text-lg">$4.99</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -134,15 +148,17 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
               data-focusable-alert
               onFocus={() => setFocus('alert-cancel')}
               id="alert-cancel"
-               className={cn(activeElement === 'alert-cancel' && 'ring-2 ring-primary')}
+              className={cn("font-bold", activeElement === 'alert-cancel' && 'ring-2 ring-primary ring-offset-2 ring-offset-background')}
             >Maybe Later</AlertDialogCancel>
             <AlertDialogAction
               data-focusable-alert
               id="alert-action"
               onFocus={() => setFocus('alert-action')}
-              className={cn(activeElement === 'alert-action' && 'ring-2 ring-primary')}
+              className={cn("font-bold", activeElement === 'alert-action' && 'ring-2 ring-primary ring-offset-2 ring-offset-background')}
               onClick={() => {
-                unlockPremium();
+                if (selectedPack) {
+                  unlockPack(selectedPack.id);
+                }
                 setShowPremiumDialog(false);
               }}
             >

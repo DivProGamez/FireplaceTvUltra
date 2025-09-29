@@ -35,7 +35,7 @@ const timerOptions = [
 ];
 
 export function PlayerClient({ pack }: { pack: AmbiancePack }) {
-  const { isPremiumUnlocked } = usePremium();
+  const { isPackUnlocked } = usePremium();
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement>(null);
   const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -49,7 +49,7 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
   const { activeElement, setFocus, setFocusableElements } = useAppFocus();
   const controlsRef = useRef<HTMLDivElement>(null);
 
-  const isLocked = pack.isPremium && !isPremiumUnlocked;
+  const isLocked = pack.isPremium && !isPackUnlocked(pack.id);
 
   const resetControlsTimeout = useCallback(() => {
     setIsControlsVisible(true);
@@ -137,7 +137,7 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
         <Lock className="w-16 h-16 text-primary mb-4" />
         <h1 className="text-3xl font-headline mb-2">Content Locked</h1>
         <p className="text-muted-foreground mb-6 max-w-md">
-          This is a premium escape. Please unlock all content to access it.
+          This is a premium escape. Please unlock it from the main menu to access it.
         </p>
         <Button asChild>
           <Link href="/">

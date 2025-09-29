@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { AmbianceGridClient } from '@/components/ambiance-grid-client';
-import { Header } from '@/components/header';
 import { SplashScreen } from '@/components/splash-screen';
 import { ambiancePacks } from '@/data/ambiance';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -47,15 +46,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
       <main className="flex-1 p-4 sm:p-6 md:p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl font-headline">
-            Welcome to Immersive Escapes
-          </h1>
-          <p className="mt-3 text-lg text-muted-foreground">
-            Find your focus and peace with our collection of soundscapes.
-          </p>
+        <div className="text-center mb-8 pt-8">
+            <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl font-headline">
+              Immersive Escapes
+            </h1>
+            <p className="mt-3 text-lg text-muted-foreground">
+              Find your focus and peace with our collection of soundscapes.
+            </p>
         </div>
 
         <div className="flex justify-center mb-8">
