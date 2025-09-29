@@ -17,16 +17,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAppFocus } from "@/context/app-focus-context";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 
 export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], gridId: string }) {
   const { isPackUnlocked, unlockPack } = usePremium();
-  const [showPremiumDialog, setShowPremiumDialog] = React.useState(false);
-  const [selectedPack, setSelectedPack] = React.useState<AmbiancePack | null>(null);
+  const { toast } = useToast();
+  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
+  const [selectedPack, setSelectedPack] = useState<AmbiancePack | null>(null);
   const { setFocus, activeElement, setFocusableElements } = useAppFocus();
   const gridRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -39,7 +41,9 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
       );
       setFocusableElements(prev => ({...prev, [gridId]: elements}));
     }
-  }, [packs, gridId, setFocusableElements]);
+    // We only want to run this when the packs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packs, gridId]);
 
   useEffect(() => {
     if (showPremiumDialog) {
@@ -63,17 +67,14 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
 
        // If focus was inside the alert, return it to the previously selected grid item.
        if (activeElement && activeElement.startsWith('alert-')) {
-          // Since we can't get the previously focused element directly after the state change,
-          // it's better to manage this state explicitly if needed. For now, let's just clear focus.
-          // A more robust solution might involve storing the last grid focus.
-          // For now, we will just set focus to the first item in the grid.
-          if (gridElements.length > 0) {
-             setFocus(gridElements[0].id);
+          if (selectedPack) {
+            const focusedElementId = `${gridId}-${packs.findIndex(p => p.id === selectedPack.id)}`;
+            setFocus(focusedElementId);
           }
        }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showPremiumDialog, gridId, setFocus, setFocusableElements]);
+  }, [showPremiumDialog, gridId, setFocus]);
 
 
   const handlePackClick = (
@@ -88,12 +89,26 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
   };
 
   const handleUnlock = () => {
-    if (selectedPack) {
-      unlockPack(selectedPack.id);
-      setShowPremiumDialog(false);
-      // After unlocking, navigate to the ambiance page
-      router.push(`/ambiance/${selectedPack.id}`);
-    }
+    if (!selectedPack) return;
+
+    toast({
+      title: "Processing Purchase...",
+      description: "Please wait while we securely process your transaction.",
+      duration: 2000,
+    });
+    
+    // Simulate purchase delay
+    setTimeout(() => {
+        unlockPack(selectedPack.id);
+        setShowPremiumDialog(false);
+        toast({
+            title: "Purchase Successful!",
+            description: `You now have access to ${selectedPack.title}.`,
+            duration: 3000,
+        });
+        // After unlocking, navigate to the ambiance page
+        router.push(`/ambiance/${selectedPack.id}`);
+    }, 2000);
   };
 
   return (
@@ -186,7 +201,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
               className={cn("font-bold", activeElement === 'alert-action' && 'ring-2 ring-primary ring-offset-2 ring-offset-background')}
               onClick={handleUnlock}
             >
-              Unlock Now for $4.99
+              Buy Now for $4.99
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

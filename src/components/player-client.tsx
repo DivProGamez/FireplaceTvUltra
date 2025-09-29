@@ -38,6 +38,7 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
   const { isPackUnlocked } = usePremium();
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -96,14 +97,20 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
     setIsLoaded(true);
   }, [pack.id]);
 
+  const togglePlayPause = () => {
+    setIsPlaying(prev => !prev);
+  }
+
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    const video = videoRef.current;
 
     if (isPlaying) {
-      audio.play().catch(() => setIsPlaying(false));
+      audio?.play().catch(console.error);
+      video?.play().catch(console.error);
     } else {
-      audio.pause();
+      audio?.pause();
+      video?.pause();
     }
   }, [isPlaying]);
   
@@ -173,17 +180,17 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
 
       {pack.videoUrl ? (
         <video
+          ref={videoRef}
           src={pack.videoUrl}
           loop
-          autoPlay={isPlaying}
           muted
           playsInline
           className="w-full h-full object-cover"
           onCanPlay={() => setIsLoaded(true)}
-          onClick={() => setIsPlaying(!isPlaying)}
+          onClick={togglePlayPause}
         />
       ) : (
-        <div onClick={() => setIsPlaying(!isPlaying)}>
+        <div onClick={togglePlayPause}>
           <CanvasRenderer animationType={pack.animationType} />
         </div>
       )}
@@ -202,7 +209,7 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
           </Button>
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4">
-          <Button id="play-pause-btn" data-focusable-player variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} onFocus={()=>setFocus('play-pause-btn')} className={getButtonClass('play-pause-btn')}>
+          <Button id="play-pause-btn" data-focusable-player variant="ghost" size="icon" onClick={togglePlayPause} onFocus={()=>setFocus('play-pause-btn')} className={getButtonClass('play-pause-btn')}>
             {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
           </Button>
            <Button id="mute-btn" data-focusable-player variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)} onFocus={()=>setFocus('mute-btn')} className={getButtonClass('mute-btn')}>
