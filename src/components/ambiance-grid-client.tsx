@@ -17,12 +17,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useAppFocus } from "@/context/app-focus-context";
+import { useRouter } from "next/navigation";
 
-export function AmbianceGridClient({ packs }: { packs: AmbiancePack[] }) {
+
+export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], gridId: string }) {
   const { isPremiumUnlocked, unlockPremium } = usePremium();
   const [showPremiumDialog, setShowPremiumDialog] = React.useState(false);
+  const { setFocus, activeElement, navigate, focusableElements, setFocusableElements } = useAppFocus();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+
+  useEffect(() => {
+    if (gridRef.current) {
+      const elements = Array.from(
+        gridRef.current.querySelectorAll<HTMLAnchorElement>('[data-focusable]')
+      );
+      setFocusableElements(prev => ({...prev, [gridId]: elements}));
+    }
+  }, [packs, gridId, setFocusableElements]);
+
 
   const handlePackClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -36,51 +53,59 @@ export function AmbianceGridClient({ packs }: { packs: AmbiancePack[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {packs.map((pack) => {
+      <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {packs.map((pack, index) => {
           const isLocked = pack.isPremium && !isPremiumUnlocked;
           const image = PlaceHolderImages.find(
             (img) => img.id === pack.thumbnailUrlId
           );
+          const elementId = `${gridId}-${index}`;
+
           return (
             <Link
               key={pack.id}
+              id={elementId}
+              data-focusable
               href={`/ambiance/${pack.id}`}
               onClick={(e) => handlePackClick(e, pack)}
+              onFocus={() => setFocus(elementId)}
               aria-label={
                 isLocked
                   ? `${pack.title} (Premium, Locked)`
                   : pack.title
               }
-              className="group focus-visible:outline-none"
+              className={cn(
+                "group focus:outline-none rounded-lg",
+                 activeElement === elementId && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+              )}
             >
-              <Card className="overflow-hidden h-full transition-all duration-300 ease-in-out hover:shadow-primary/20 hover:shadow-lg hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              <Card className="overflow-hidden h-full transition-all duration-300 ease-in-out hover:shadow-primary/20 hover:shadow-lg hover:-translate-y-1">
                 <CardContent className="p-0 relative">
                   <div className="aspect-video overflow-hidden">
                     <Image
                       src={image?.imageUrl || "/placeholder.png"}
                       alt={image?.description || pack.title}
-                      width={600}
-                      height={400}
+                      width={400}
+                      height={225}
                       data-ai-hint={image?.imageHint}
                       className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <Lock className="w-10 h-10 text-primary-foreground/80" />
+                      <Lock className="w-8 h-8 text-primary-foreground/80" />
                     </div>
                   )}
                   <div
                     className={cn(
-                      "p-4 bg-card-foreground/5 dark:bg-card/60 backdrop-blur-sm",
+                      "p-3 bg-card-foreground/5 dark:bg-card/60 backdrop-blur-sm",
                       isLocked && "text-muted-foreground"
                     )}
                   >
-                    <h3 className="font-bold font-headline truncate">
+                    <h3 className="font-bold text-sm font-headline truncate">
                       {pack.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {pack.description}
                     </p>
                   </div>
@@ -104,8 +129,17 @@ export function AmbianceGridClient({ packs }: { packs: AmbiancePack[] }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Maybe Later</AlertDialogCancel>
+            <AlertDialogCancel
+              data-focusable
+              onFocus={() => setFocus('alert-cancel')}
+              id="alert-cancel"
+               className={cn(activeElement === 'alert-cancel' && 'ring-2 ring-primary')}
+            >Maybe Later</AlertDialogCancel>
             <AlertDialogAction
+              data-focusable
+              id="alert-action"
+              onFocus={() => setFocus('alert-action')}
+              className={cn(activeElement === 'alert-action' && 'ring-2 ring-primary')}
               onClick={() => {
                 unlockPremium();
                 setShowPremiumDialog(false);

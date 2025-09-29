@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { PremiumProvider } from '@/context/premium-context';
 import { Toaster } from '@/components/ui/toaster';
+import { AppFocusProvider } from '@/context/app-focus-context';
 
 export const metadata: Metadata = {
   title: 'Immersive Escapes',
@@ -34,8 +35,10 @@ export default function RootLayout({
         )}
       >
         <PremiumProvider>
-          {children}
-          <Toaster />
+          <AppFocusProvider>
+            {children}
+            <Toaster />
+          </AppFocusProvider>
         </PremiumProvider>
       </body>
     </html>
