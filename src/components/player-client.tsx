@@ -10,7 +10,6 @@ import {
   Clock,
   Loader2,
   Lock,
-  MessageCircle,
   Pause,
   Play,
   Volume2,
@@ -25,7 +24,6 @@ import {
 } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { adjustSoundscape } from "@/ai/flows/dynamic-soundscape";
 import { useAppFocus } from "@/context/app-focus-context";
 
 const timerOptions = [
@@ -48,7 +46,6 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [timer, setTimer] = useState(0); // in seconds
   const [timerKey, setTimerKey] = useState(Date.now());
-  const [aiSoundscape, setAiSoundscape] = useState("");
   const { activeElement, setFocus, setFocusableElements } = useAppFocus();
   const controlsRef = useRef<HTMLDivElement>(null);
 
@@ -134,30 +131,6 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
       return () => clearInterval(interval);
     }
   }, [timer, router, timerKey]);
-
-  useEffect(() => {
-    let timerStatus: "off" | "running" | "almost_done" = "off";
-    if (timer > 0) {
-      timerStatus = timer <= 5 * 60 ? "almost_done" : "running";
-    }
-
-    const updateSoundscape = async () => {
-      try {
-        const result = await adjustSoundscape({
-          audioDescription: pack.audioDescription,
-          timerStatus,
-          currentTime: new Date().toLocaleTimeString(),
-        });
-        setAiSoundscape(result.modifiedAudioDescription);
-      } catch (error) {
-        console.error("AI soundscape adjustment failed:", error);
-      }
-    };
-
-    updateSoundscape();
-    const interval = setInterval(updateSoundscape, 30000); // Update every 30s
-    return () => clearInterval(interval);
-  }, [timer, pack.audioDescription]);
 
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
      if (e.key === 'Escape') {
@@ -268,15 +241,6 @@ export function PlayerClient({ pack }: { pack: AmbiancePack }) {
         <div className="absolute bottom-8 right-8 text-lg tabular-nums">
           {formatTime(timer)}
         </div>
-        {aiSoundscape && (
-          <div className="absolute bottom-24 right-8 max-w-sm bg-black/50 p-3 rounded-lg text-sm text-white/80 backdrop-blur-sm flex items-start gap-2">
-            <MessageCircle className="w-5 h-5 flex-shrink-0 text-accent mt-0.5" />
-            <p>
-              <span className="font-bold text-accent">AI Soundscape:</span>{" "}
-              {aiSoundscape}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
