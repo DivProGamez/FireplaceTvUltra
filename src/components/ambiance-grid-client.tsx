@@ -27,7 +27,7 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
   const { isPackUnlocked, unlockPack } = usePremium();
   const [showPremiumDialog, setShowPremiumDialog] = React.useState(false);
   const [selectedPack, setSelectedPack] = React.useState<AmbiancePack | null>(null);
-  const { setFocus, activeElement, setFocusableElements, focusableElements } = useAppFocus();
+  const { setFocus, activeElement, setFocusableElements } = useAppFocus();
   const gridRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -53,21 +53,27 @@ export function AmbianceGridClient({ packs, gridId }: { packs: AmbiancePack[], g
         }
       }, 100); 
     } else {
-       // Return focus to the grid when dialog is closed
-       if (activeElement && activeElement.startsWith('alert-')) {
-          const lastFocusedGridItem = Object.values(focusableElements).flat().find(el => el.id.startsWith(gridId));
-          if(lastFocusedGridItem) {
-            setFocus(lastFocusedGridItem.id);
-          }
-       }
-       // Restore grid focusable elements
+       // This part runs when the dialog is closed.
+       // We need to restore the main focusable elements.
        const gridElements = Array.from(
         gridRef.current?.querySelectorAll<HTMLAnchorElement>('[data-focusable-grid-item]') || []
       );
        const tabElements = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-focusable-tab]'));
        setFocusableElements({ tabs: tabElements, [gridId]: gridElements });
+
+       // If focus was inside the alert, return it to the previously selected grid item.
+       if (activeElement && activeElement.startsWith('alert-')) {
+          // Since we can't get the previously focused element directly after the state change,
+          // it's better to manage this state explicitly if needed. For now, let's just clear focus.
+          // A more robust solution might involve storing the last grid focus.
+          // For now, we will just set focus to the first item in the grid.
+          if (gridElements.length > 0) {
+             setFocus(gridElements[0].id);
+          }
+       }
     }
-  }, [showPremiumDialog, activeElement, gridId, setFocus, setFocusableElements, focusableElements]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPremiumDialog, gridId, setFocus, setFocusableElements]);
 
 
   const handlePackClick = (
